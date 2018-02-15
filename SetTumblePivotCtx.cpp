@@ -18,7 +18,7 @@
 
 SetTumblePivotCtx::SetTumblePivotCtx(){
 	setTitleString("Set Tumble Pivot");
-	setImage("curvatureComb.xpm", MPxContext::kImage1);
+	setImage("setTumblePivot.xpm", MPxContext::kImage1);
 }
 
 SetTumblePivotCtx::~SetTumblePivotCtx()
@@ -26,7 +26,7 @@ SetTumblePivotCtx::~SetTumblePivotCtx()
 }
 
 void SetTumblePivotCtx::toolOnSetup(MEvent &event) {
-	setHelpString("Drag with LMB to adjust scale, MMB to adjust samples");
+	setHelpString("Set tumble pivot by clicking on geometry");
 
 	deleteManipulators();
 
@@ -37,7 +37,7 @@ void SetTumblePivotCtx::toolOnSetup(MEvent &event) {
 }
 
 void SetTumblePivotCtx::doEnterRegion() {
-	setHelpString("Drag with LMB to adjust scale, MMB to adjust samples");
+	setHelpString("Set tumble pivot by clicking on geometry");
 }
 
 void SetTumblePivotCtx::toolOffCleanup() {
