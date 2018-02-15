@@ -46,7 +46,7 @@ void SetTumblePivotCtx::toolOffCleanup() {
 }
 
 MString SetTumblePivotCtx::stringClassName() const {
-	return "SetTumblePivot";
+	return "setTumblePivotCtx";
 }
 
 // VP2
