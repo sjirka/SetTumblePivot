@@ -1,0 +1,28 @@
+global proc setTumblePivotCtxProperties()
+{
+	string $parent = `toolPropertyWindow -q -location`;
+
+	setUITemplate -pushTemplate OptionsTemplate;
+
+	setParent $parent;
+
+	if(`columnLayout -ex setTumblePivotLayout`)
+		deleteUI -lay setTumblePivotLayout;
+
+	columnLayout setTumblePivotLayout;
+		frameLayout -collapsable true -collapse false
+			-label "Set Tumble Pivot Settings" setTumbleFrame;
+
+				separator -style "none";
+
+    			radioButtonGrp -nrb 2
+       				-label  "Set:"
+       				-label1  "Tumble pivot"
+       		 		-label2  "Center of interest"
+					tumbleMode;
+
+		setParent ..;
+	setParent ..;
+
+	setUITemplate -popTemplate;
+}

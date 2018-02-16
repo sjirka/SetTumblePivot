@@ -1,0 +1,15 @@
+global proc setTumblePivotCtxValues(string $toolName)
+{
+	string $parent = (`toolPropertyWindow -q -location` + "|setTumblePivotLayout");
+	setParent $parent;
+
+ 	int $ltValue = `setTumblePivotCtx -q -m $toolName`;
+
+    radioButtonGrp -e
+       	-on1 ("setTumblePivotCtx -e -m 0 "+$toolName)
+       	-on2 ("setTumblePivotCtx -e -m 1 "+$toolName)
+     	-select (($ltValue==0) ? 1 : 2)
+     	tumbleMode;
+
+	toolPropertySelect setTumblePivotLayout;
+}
