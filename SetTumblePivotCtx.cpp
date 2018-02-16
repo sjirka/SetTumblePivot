@@ -201,12 +201,31 @@ MStatus SetTumblePivotCtx::doRelease(MEvent &event){
 		MFnCamera fnCamera(cameraPath, &status);
 		CHECK_MSTATUS_AND_RETURN_IT(status);
 
-		status = fnCamera.setTumblePivot(pivot);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
 		status = fnCamera.setCenterOfInterest((pivot - source).length());
 		CHECK_MSTATUS_AND_RETURN_IT(status);
 
-		MGlobal::executeCommand("if(`contextInfo -ex tumbleContext`)tumbleCtx -e -localTumble 0 -autoSetPivot 0 tumbleContext;");
+		switch (m_mode)
+		{
+		case kCenterOfInterest: {
+			MGlobal::executeCommand("if(`contextInfo -ex tumbleContext`)tumbleCtx -e -localTumble 1 tumbleContext;");
+			MPoint eye = fnCamera.eyePoint(MSpace::kWorld);
+			MVector
+				up = MGlobal::upAxis(),
+				dir = pivot - eye;
+
+			status = fnCamera.setCenterOfInterestPoint(pivot, MSpace::kWorld);
+			CHECK_MSTATUS_AND_RETURN_IT(status);
+			status = fnCamera.set(eye, dir, up, fnCamera.horizontalFieldOfView(), fnCamera.aspectRatio());
+			CHECK_MSTATUS_AND_RETURN_IT(status);
+			break;
+		}
+		default:
+			MGlobal::executeCommand("if(`contextInfo -ex tumbleContext`)tumbleCtx -e -localTumble 0 -autoSetPivot 0 tumbleContext;");
+			status = fnCamera.setTumblePivot(pivot);
+			CHECK_MSTATUS_AND_RETURN_IT(status);
+			break;
+		}
+
 	}
 
 	MGlobal::selectCommand(originalSelection, MGlobal::kReplaceList);

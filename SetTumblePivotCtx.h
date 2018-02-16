@@ -7,6 +7,12 @@
 #include <maya\MPointArray.h>
 #include <maya\MDagPath.h>
 
+enum TumbleMode
+{
+	kTumblePoint,
+	kCenterOfInterest
+};
+
 class SetTumblePivotCtx : public MPxContext
 {
 public:
@@ -31,6 +37,7 @@ public:
 	static bool meshClosestIntersection(MObject &mesh, MPoint &source, MVector &ray, MPoint &intersection, MStatus *status = NULL);
 	static MPoint closestPoint(MPointArray &cloud, MPoint &toPoint);
 
+	TumbleMode m_mode = TumbleMode::kTumblePoint;
 private:
 	TumblePivotManipContainer* m_manipPtr = NULL;
 };

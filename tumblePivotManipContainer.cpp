@@ -41,7 +41,11 @@ void TumblePivotManipContainer::draw(M3dView &view, const MDagPath &path, M3dVie
 	MFnCamera fnCam(camPath, &status);
 	CHECK_MSTATUS(status);
 
-	m_tumblePivot = fnCam.tumblePivot(&status);
+	int tumbleMode;
+	status = MGlobal::executeCommand("tumbleCtx -q -localTumble tumbleContext;", tumbleMode);
+	CHECK_MSTATUS(status);
+	
+	m_tumblePivot = (tumbleMode == 0)?fnCam.tumblePivot(&status):fnCam.centerOfInterestPoint(MSpace::kWorld, &status);
 	CHECK_MSTATUS(status);
 
 	m_scaleFactor = m_scaleMultiplier*SCamera::scaleFactor(const_cast<M3dView&>(view), m_tumblePivot);
@@ -88,7 +92,11 @@ void TumblePivotManipContainer::preDrawUI(const M3dView &view){
 	MFnCamera fnCam(camPath, &status);
 	CHECK_MSTATUS(status);
 
-	m_tumblePivot = fnCam.tumblePivot(&status);
+	int tumbleMode;
+	status = MGlobal::executeCommand("tumbleCtx -q -localTumble tumbleContext;", tumbleMode);
+	CHECK_MSTATUS(status);
+
+	m_tumblePivot = (tumbleMode == 0) ? fnCam.tumblePivot(&status) : fnCam.centerOfInterestPoint(MSpace::kWorld, &status);
 	CHECK_MSTATUS(status);
 
 	m_scaleFactor = m_scaleMultiplier*SCamera::scaleFactor(const_cast<M3dView&>(view), m_tumblePivot);
