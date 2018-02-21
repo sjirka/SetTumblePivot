@@ -63,19 +63,7 @@ MStatus SetTumblePivotCtx::doRelease(MEvent &event, MHWRender::MUIDrawManager &d
 MStatus SetTumblePivotCtx::doPress(MEvent &event){
 	MStatus status;
 
-	status = MGlobal::getActiveSelectionList(m_activeList);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
-	status = MGlobal::getHiliteList(m_hiliteList);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
-	status = MGlobal::getRichSelection(m_richList, false);
-	m_hasRichSelection = (status == MS::kSuccess) ? true : false;
-	m_selectionMode = MGlobal::selectionMode(&status);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
-	m_componentMask = MGlobal::componentSelectionMask(&status);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
-	m_objectMask = MGlobal::objectSelectionMask(&status);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
-	m_animMask = MGlobal::animSelectionMask(&status);
+	status = m_selectionState.storeCurrentSelection();
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	return MS::kSuccess;
@@ -236,22 +224,8 @@ MStatus SetTumblePivotCtx::doRelease(MEvent &event){
 		}
 	}
 
-	status = MGlobal::setSelectionMode(m_selectionMode);
+	status = m_selectionState.restoreSelection();
 	CHECK_MSTATUS_AND_RETURN_IT(status);
-	status = MGlobal::setComponentSelectionMask(m_componentMask);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
-	status = MGlobal::setAnimSelectionMask(m_animMask);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
-	status = MGlobal::setObjectSelectionMask(m_objectMask);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
-	status = MGlobal::setActiveSelectionList(m_activeList);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
-	status = MGlobal::setHiliteList(m_hiliteList);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
-	if (m_hasRichSelection) {
-		status = MGlobal::setRichSelection(m_richList);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
-	}
 
 	return MS::kSuccess;
 }

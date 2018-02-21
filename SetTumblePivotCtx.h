@@ -1,6 +1,7 @@
 #pragma once
 #include "tumblePivotManipContainer.h"
 #include "tumbleMode.h"
+#include "../_library/SSelection.h"
 
 #include <maya\MPxContext.h>
 #include <maya\MPoint.h>
@@ -39,18 +40,6 @@ public:
 private:
 	TumblePivotManipContainer* m_manipPtr = NULL;
 
-	MSelectionList
-		m_activeList,
-		m_hiliteList;
-	MRichSelection
-		m_richList;
-	MGlobal::MSelectionMode
-		m_selectionMode;
-	MSelectionMask
-		m_objectMask,
-		m_componentMask,
-		m_animMask;
-	bool
-		m_hasRichSelection;
+	SSelection m_selectionState;
 };
 
