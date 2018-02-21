@@ -1,5 +1,8 @@
 global proc setTumblePivotCtxValues(string $toolName)
 {
+	if(!`columnLayout -ex setTumblePivotLayout`)
+		return;
+
 	string $parent = (`toolPropertyWindow -q -location` + "|setTumblePivotLayout");
 	setParent $parent;
 

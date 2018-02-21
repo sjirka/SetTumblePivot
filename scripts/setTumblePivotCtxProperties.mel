@@ -16,9 +16,11 @@ global proc setTumblePivotCtxProperties()
 				separator -style "none";
 
     			radioButtonGrp -nrb 2
-       				-label  "Set:"
+    				-vr
+       				-label  "Tumble mode:"
        				-label1  "Tumble pivot"
        		 		-label2  "Center of interest"
+       		 		-select ((`optionVar -exists "setTumblePivotMode"`)?(`optionVar -q "setTumblePivotMode"`+1):1)
 					tumbleMode;
 
 		setParent ..;
