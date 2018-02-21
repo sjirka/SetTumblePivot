@@ -1,17 +1,15 @@
 #pragma once
 #include "tumblePivotManipContainer.h"
+#include "tumbleMode.h"
 
 #include <maya\MPxContext.h>
 #include <maya\MPoint.h>
 #include <maya\MVector.h>
 #include <maya\MPointArray.h>
 #include <maya\MDagPath.h>
-
-enum TumbleMode
-{
-	kTumblePoint,
-	kCenterOfInterest
-};
+#include <maya\MRichSelection.h>
+#include <maya\MSelectionList.h>
+#include <maya\MGlobal.h>
 
 class SetTumblePivotCtx : public MPxContext
 {
@@ -40,5 +38,19 @@ public:
 	TumbleMode m_mode = TumbleMode::kTumblePoint;
 private:
 	TumblePivotManipContainer* m_manipPtr = NULL;
+
+	MSelectionList
+		m_activeList,
+		m_hiliteList;
+	MRichSelection
+		m_richList;
+	MGlobal::MSelectionMode
+		m_selectionMode;
+	MSelectionMask
+		m_objectMask,
+		m_componentMask,
+		m_animMask;
+	bool
+		m_hasRichSelection;
 };
 

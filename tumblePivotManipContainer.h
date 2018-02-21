@@ -1,6 +1,7 @@
 #pragma once
 #include <maya\MPxManipContainer.h>
 #include "maya\MDagPath.h"
+#include "tumbleMode.h"
 
 class TumblePivotManipContainer : public MPxManipContainer
 {
@@ -20,7 +21,10 @@ public:
 
 	static MTypeId id;
 private:
-	MPoint m_tumblePivot;
+	MPoint
+		m_tumblePivot,
+		m_textPoint;
 	double m_scaleFactor;
 	double m_scaleMultiplier = 0.02;
+	TumbleMode m_tumbleMode;
 };
