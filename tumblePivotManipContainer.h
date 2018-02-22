@@ -20,10 +20,11 @@ public:
 	virtual void 	drawUI(MHWRender::MUIDrawManager &drawManager, const MHWRender::MFrameContext &frameContext) const;
 
 	static MTypeId id;
-private:
+	bool m_drag = false;
 	MPoint
 		m_tumblePivot,
 		m_textPoint;
+private:
 	double m_scaleFactor;
 	double m_scaleMultiplier = 0.02;
 	TumbleMode m_tumbleMode;

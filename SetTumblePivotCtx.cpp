@@ -1,4 +1,5 @@
 #include "SetTumblePivotCtx.h"
+#include "SPlane.h"
 
 #include <maya\MFnDependencyNode.h>
 #include <maya\MFnMesh.h>
@@ -66,18 +67,6 @@ MStatus SetTumblePivotCtx::doPress(MEvent &event){
 	status = m_selectionState.storeCurrentSelection();
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
-	return MS::kSuccess;
-}
-
-MStatus SetTumblePivotCtx::doDrag(MEvent &event) {
-	MStatus status;
-
-	return MS::kSuccess;
-}
-
-MStatus SetTumblePivotCtx::doRelease(MEvent &event){
-	MStatus status;
-
 	status = MGlobal::setHiliteList(MSelectionList());
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
@@ -86,28 +75,41 @@ MStatus SetTumblePivotCtx::doRelease(MEvent &event){
 	event.getPosition(x, y);
 	MGlobal::selectFromScreen(x, y, MGlobal::kReplaceList, MGlobal::kSurfaceSelectMethod);
 
-	MSelectionList selection;
-	MGlobal::getActiveSelectionList(selection);
+	MGlobal::getActiveSelectionList(m_activeSelection);
 
-	if (!selection.isEmpty()) {
+	status = m_selectionState.restoreSelection();
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	return doDrag(event);
+}
+
+MStatus SetTumblePivotCtx::doDrag(MEvent &event) {
+	MStatus status;
+
+	if (NULL != m_manipPtr)
+		m_manipPtr->m_drag = true;
+
+	// Get the view based ray
+	short x, y;
+	event.getPosition(x, y);
+
+	MVector ray;
+	MPoint pivot;
+	M3dView currentView = M3dView::active3dView(&status);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+	status = currentView.viewToWorld(x, y, m_source, ray);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	if (!m_activeSelection.isEmpty()) {
 		MDagPath path;
-		status = selection.getDagPath(0, path);
+		status = m_activeSelection.getDagPath(0, path);
 		CHECK_MSTATUS_AND_RETURN_IT(status);
 		status = path.extendToShapeDirectlyBelow(0);
 		CHECK_MSTATUS_AND_RETURN_IT(status);
 
-		// Get the view based ray
-		MPoint source, pivot;
-		MVector ray;
-		bool hit;
-		M3dView currentView = M3dView::active3dView(&status);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
-		status = currentView.viewToWorld(x, y, source, ray);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
-
 		// Find ray/geometry intersection
 		if (path.apiType() == MFn::kMesh) {
-			hit = meshClosestIntersection(path, source, ray, pivot, &status);
+			m_hit = meshClosestIntersection(path, m_source, ray, pivot, &status);
 			CHECK_MSTATUS_AND_RETURN_IT(status);
 		}
 		else if (path.apiType() == MFn::kNurbsSurface) {
@@ -115,10 +117,8 @@ MStatus SetTumblePivotCtx::doRelease(MEvent &event){
 			CHECK_MSTATUS_AND_RETURN_IT(status);
 
 			// Get nurbs intersections and use the closest
-			MDoubleArray u, v;
-			MPointArray intersections;
-			hit = fnNurbs.intersect(source, ray, u, v, intersections, 0.01, MSpace::kWorld);
-			pivot = closestPoint(intersections, source);
+			double u, v;
+			m_hit = fnNurbs.intersect(m_source, ray, u, v, pivot, 0.01, MSpace::kWorld);
 		}
 		else if (path.apiType() == MFn::kSubdiv) {
 			// First convert SubD to proxy Mesh
@@ -142,7 +142,7 @@ MStatus SetTumblePivotCtx::doRelease(MEvent &event){
 			fnMesh.setPoints(positions);
 
 			// Get closest hit on the proxy mesh
-			hit = meshClosestIntersection(tesselated, source, ray, pivot, &status);
+			m_hit = meshClosestIntersection(tesselated, m_source, ray, pivot, &status);
 			CHECK_MSTATUS_AND_RETURN_IT(status);
 		}
 		else if (path.apiType() == MFn::kNurbsCurve) {
@@ -186,46 +186,74 @@ MStatus SetTumblePivotCtx::doRelease(MEvent &event){
 			// Use center of bounding box for non geometry types
 			MFnTransform fnTransform(path.transform());
 			pivot = fnTransform.boundingBox().center();
-			hit = true;
+			m_hit = true;
 		}
-
-		if (hit) {
-			MDagPath cameraPath;
-			status = currentView.getCamera(cameraPath);
-			CHECK_MSTATUS_AND_RETURN_IT(status);
-			MFnCamera fnCamera(cameraPath, &status);
-			CHECK_MSTATUS_AND_RETURN_IT(status);
-
-			status = fnCamera.setCenterOfInterest((pivot - source).length());
-			CHECK_MSTATUS_AND_RETURN_IT(status);
-
-			switch (m_mode)
-			{
-			case kCenterOfInterest: {
-				MGlobal::executeCommand("if(`contextInfo -ex tumbleContext`)tumbleCtx -e -localTumble 1 tumbleContext;");
-				MPoint eye = fnCamera.eyePoint(MSpace::kWorld);
-				MVector
-					up = MGlobal::upAxis(),
-					dir = pivot - eye;
-
-				status = fnCamera.setCenterOfInterestPoint(pivot, MSpace::kWorld);
-				CHECK_MSTATUS_AND_RETURN_IT(status);
-				status = fnCamera.set(eye, dir, up, fnCamera.horizontalFieldOfView(), fnCamera.aspectRatio());
-				CHECK_MSTATUS_AND_RETURN_IT(status);
-				break;
-			}
-			default:
-				MGlobal::executeCommand("if(`contextInfo -ex tumbleContext`)tumbleCtx -e -localTumble 0 -autoSetPivot 0 tumbleContext;");
-				status = fnCamera.setTumblePivot(pivot);
-				CHECK_MSTATUS_AND_RETURN_IT(status);
-				break;
-			}
-
-		}
+		if (m_hit)
+			m_pivot = pivot;
+	}
+	else
+	{
+		MDagPath cameraPath;
+		status = currentView.getCamera(cameraPath);
+		CHECK_MSTATUS_AND_RETURN_IT(status);
+		MFnCamera fnCamera(cameraPath, &status);
+		CHECK_MSTATUS_AND_RETURN_IT(status);
+		
+		SPlane plane;
+		plane.setNormal((fnCamera.isOrtho())?fnCamera.viewDirection(MSpace::kWorld) : MGlobal::upAxis());
+		double param;
+		plane.intersect(m_source, ray, m_pivot, param);
+		m_hit = true;
 	}
 
-	status = m_selectionState.restoreSelection();
+	if (m_hit) {
+		if (NULL != m_manipPtr)
+			m_manipPtr->m_tumblePivot = m_pivot;
+		currentView.refresh(false, true);
+	}
+
+	return MS::kSuccess;
+}
+
+MStatus SetTumblePivotCtx::doRelease(MEvent &event){
+	MStatus status;
+
+	if (NULL != m_manipPtr)
+		m_manipPtr->m_drag = false;
+
+	M3dView currentView = M3dView::active3dView(&status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	MDagPath cameraPath;
+	status = currentView.getCamera(cameraPath);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+	MFnCamera fnCamera(cameraPath, &status);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	status = fnCamera.setCenterOfInterest((m_pivot - m_source).length());
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	switch (m_mode)
+	{
+	case kCenterOfInterest: {
+		MGlobal::executeCommand("if(`contextInfo -ex tumbleContext`)tumbleCtx -e -localTumble 1 tumbleContext;");
+		MPoint eye = fnCamera.eyePoint(MSpace::kWorld);
+		MVector
+			up = MGlobal::upAxis(),
+			dir = m_pivot - eye;
+
+		status = fnCamera.setCenterOfInterestPoint(m_pivot, MSpace::kWorld);
+		CHECK_MSTATUS_AND_RETURN_IT(status);
+		status = fnCamera.set(eye, dir, up, fnCamera.horizontalFieldOfView(), fnCamera.aspectRatio());
+		CHECK_MSTATUS_AND_RETURN_IT(status);
+		break;
+	}
+	default:
+		MGlobal::executeCommand("if(`contextInfo -ex tumbleContext`)tumbleCtx -e -localTumble 0 -autoSetPivot 0 tumbleContext;");
+		status = fnCamera.setTumblePivot(m_pivot);
+		CHECK_MSTATUS_AND_RETURN_IT(status);
+		break;
+	}
 
 	return MS::kSuccess;
 }
@@ -254,17 +282,4 @@ bool SetTumblePivotCtx::meshClosestIntersection(MObject &mesh, MPoint &source, M
 	CHECK_MSTATUS_AND_RETURN(*status, false);
 	intersection = intersectionFloat;
 	return hit;
-}
-
-MPoint SetTumblePivotCtx::closestPoint(MPointArray &cloud, MPoint &toPoint) {
-	MPoint closestPoint;
-	double closestDistance;
-	for (unsigned d = 0; d < cloud.length(); d++) {
-		double distance = (cloud[d] - toPoint).length();
-		if (d == 0 || distance < closestDistance) {
-			closestDistance = distance;
-			closestPoint = cloud[d];
-		}
-	}
-	return closestPoint;
 }

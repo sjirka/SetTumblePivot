@@ -34,12 +34,16 @@ public:
 	
 	static bool meshClosestIntersection(MDagPath &path, MPoint &source, MVector &ray, MPoint &intersection, MStatus *status = NULL);
 	static bool meshClosestIntersection(MObject &mesh, MPoint &source, MVector &ray, MPoint &intersection, MStatus *status = NULL);
-	static MPoint closestPoint(MPointArray &cloud, MPoint &toPoint);
 
 	TumbleMode m_mode = TumbleMode::kTumblePoint;
 private:
 	TumblePivotManipContainer* m_manipPtr = NULL;
+	MPoint
+		m_pivot,
+		m_source;
+	bool m_hit;
 
 	SSelection m_selectionState;
+	MSelectionList m_activeSelection;
 };
 

@@ -35,30 +35,38 @@ void TumblePivotManipContainer::draw(M3dView &view, const MDagPath &path, M3dVie
 
 	MStatus status;
 
-	MDagPath camPath;
-	status = view.getCamera(camPath);
-	CHECK_MSTATUS(status);
-
-	MFnCamera fnCam(camPath, &status);
-	CHECK_MSTATUS(status);
-
 	int tumbleMode;
 	status = MGlobal::executeCommand("tumbleCtx -q -localTumble tumbleContext;", tumbleMode);
 	CHECK_MSTATUS(status);
 	m_tumbleMode = static_cast<TumbleMode>(tumbleMode);
-	
-	m_tumblePivot = (m_tumbleMode == TumbleMode::kTumblePoint)?fnCam.tumblePivot(&status):fnCam.centerOfInterestPoint(MSpace::kWorld, &status);
-	CHECK_MSTATUS(status);
+
+	if (!m_drag) {
+		MDagPath camPath;
+		status = view.getCamera(camPath);
+		CHECK_MSTATUS(status);
+
+		MFnCamera fnCam(camPath, &status);
+		CHECK_MSTATUS(status);
+
+		m_tumblePivot = (m_tumbleMode == TumbleMode::kTumblePoint) ? fnCam.tumblePivot(&status) : fnCam.centerOfInterestPoint(MSpace::kWorld, &status);
+		CHECK_MSTATUS(status);
+	}
 
 	m_scaleFactor = m_scaleMultiplier*SCamera::scaleFactor(const_cast<M3dView&>(view), m_tumblePivot);
 
+	short x, y;
+	view.worldToView(m_tumblePivot, x, y);
+	view.viewToWorld(x + 5, y + 5, m_textPoint, MVector());
+
 	view.beginGL();
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
-	glColor3f(0.0f, 1.0f, 1.0f);
+
+	MString text = (m_tumbleMode == TumbleMode::kTumblePoint) ? "T" : "C";
+	MColor color = (m_tumbleMode == TumbleMode::kTumblePoint) ? MColor(0, 1, 1) : MColor(0, 0, 1);
+
+	glColor3f(color.r, color.g, color.b);
 	glDisable(GL_LINE_STIPPLE);
 
-
-	MPointArray circle;
 	unsigned int divisions = 20;
 
 	glBegin(GL_LINE_STRIP);
@@ -80,6 +88,8 @@ void TumblePivotManipContainer::draw(M3dView &view, const MDagPath &path, M3dVie
 	}
 	glEnd();
 
+	view.drawText(text, m_textPoint);
+
 	glPopAttrib();
 	view.endGL();
 }
@@ -87,20 +97,22 @@ void TumblePivotManipContainer::draw(M3dView &view, const MDagPath &path, M3dVie
 void TumblePivotManipContainer::preDrawUI(const M3dView &view){
 	MStatus status;
 
-	MDagPath camPath;
-	status = const_cast<M3dView&>(view).getCamera(camPath);
-	CHECK_MSTATUS(status);
-
-	MFnCamera fnCam(camPath, &status);
-	CHECK_MSTATUS(status);
-
 	int tumbleMode;
 	status = MGlobal::executeCommand("tumbleCtx -q -localTumble tumbleContext;", tumbleMode);
 	CHECK_MSTATUS(status);
 	m_tumbleMode = static_cast<TumbleMode>(tumbleMode);
 
-	m_tumblePivot = (m_tumbleMode == TumbleMode::kTumblePoint) ? fnCam.tumblePivot(&status) : fnCam.centerOfInterestPoint(MSpace::kWorld, &status);
-	CHECK_MSTATUS(status);
+	if (!m_drag) {
+		MDagPath camPath;
+		status = const_cast<M3dView&>(view).getCamera(camPath);
+		CHECK_MSTATUS(status);
+
+		MFnCamera fnCam(camPath, &status);
+		CHECK_MSTATUS(status);
+
+		m_tumblePivot = (m_tumbleMode == TumbleMode::kTumblePoint) ? fnCam.tumblePivot(&status) : fnCam.centerOfInterestPoint(MSpace::kWorld, &status);
+		CHECK_MSTATUS(status);
+	}
 
 	short x, y;
 	view.worldToView(m_tumblePivot, x, y);
@@ -111,6 +123,9 @@ void TumblePivotManipContainer::preDrawUI(const M3dView &view){
 }
 
 void TumblePivotManipContainer::drawUI(MHWRender::MUIDrawManager &drawManager, const MHWRender::MFrameContext &frameContext) const {
+
+	MGlobal::displayInfo("draw");
+
 	drawManager.beginDrawable();
 	drawManager.setDepthPriority(7);
 	drawManager.setPointSize(7);
