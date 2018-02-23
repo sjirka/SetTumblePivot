@@ -1,5 +1,7 @@
 #include "SetTumblePivotCtxCmd.h"
 
+#include <maya\MToolsInfo.h>
+
 SetTumblePivotCtxCmd::SetTumblePivotCtxCmd(){
 }
 
@@ -42,11 +44,10 @@ MStatus SetTumblePivotCtxCmd::doEditFlags() {
 		status = argData.getFlagArgument(MODE_FLAG, 0, value);
 		CHECK_MSTATUS_AND_RETURN_IT(status);
 		m_context->m_mode = static_cast<TumbleMode>(value);
-		MGlobal::executeCommand(MString("tumbleCtx -e -localTumble ")+ value +" tumbleContext;");
 		MGlobal::setOptionVarValue("setTumblePivotMode", value);
+		MGlobal::executeCommand(MString("tumbleCtx -e -localTumble ") + value + " tumbleContext; refresh;");
+		MToolsInfo::setDirtyFlag(*m_context);
 	}
-
-	MGlobal::executeCommand("setTumblePivotCtxValues " + arg[0] + "; refresh;");
 
 	return status;
 }
