@@ -5,6 +5,9 @@
 #include "maya\MFnManip3D.h"
 #include "maya\MPointArray.h"
 
+float tumbleColor[3] = { 0.0, 1.0, 1.0 };
+float centerColor[3] = { 1.0, 1.0, 0.0 };
+
 
 MTypeId TumblePivotManipContainer::id(0x00127899);
 
@@ -62,7 +65,7 @@ void TumblePivotManipContainer::draw(M3dView &view, const MDagPath &path, M3dVie
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 
 	MString text = (m_tumbleMode == TumbleMode::kTumblePoint) ? "T" : "C";
-	MColor color = (m_tumbleMode == TumbleMode::kTumblePoint) ? MColor(0, 1, 1) : MColor(0, 0, 1);
+	MColor color = (m_tumbleMode == TumbleMode::kTumblePoint) ? MColor(tumbleColor) : MColor(centerColor);
 
 	glColor3f(color.r, color.g, color.b);
 	glDisable(GL_LINE_STIPPLE);
@@ -124,14 +127,11 @@ void TumblePivotManipContainer::preDrawUI(const M3dView &view){
 
 void TumblePivotManipContainer::drawUI(MHWRender::MUIDrawManager &drawManager, const MHWRender::MFrameContext &frameContext) const {
 
-	MGlobal::displayInfo("draw");
-
 	drawManager.beginDrawable();
 	drawManager.setDepthPriority(7);
-	drawManager.setPointSize(7);
 
 	MString text = (m_tumbleMode == TumbleMode::kTumblePoint) ? "T" : "C";
-	MColor color = (m_tumbleMode == TumbleMode::kTumblePoint) ? MColor(0, 1, 1) : MColor(0, 0, 1);
+	MColor color = (m_tumbleMode == TumbleMode::kTumblePoint) ? MColor(tumbleColor) : MColor(centerColor);
 
 	drawManager.setColor(color);
 	drawManager.circle(m_tumblePivot, MVector::xAxis, m_scaleFactor);

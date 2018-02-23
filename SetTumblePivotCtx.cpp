@@ -73,7 +73,7 @@ MStatus SetTumblePivotCtx::doPress(MEvent &event){
 	// Click select geometry
 	short x, y;
 	event.getPosition(x, y);
-	MGlobal::selectFromScreen(x, y, MGlobal::kReplaceList, MGlobal::kSurfaceSelectMethod);
+	MGlobal::selectFromScreen(x, y, MGlobal::kReplaceList, MGlobal::selectionMethod());
 
 	MGlobal::getActiveSelectionList(m_activeSelection);
 
