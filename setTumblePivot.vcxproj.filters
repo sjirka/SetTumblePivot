@@ -24,6 +24,18 @@
     <ClInclude Include="tumblePivotManipContainer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SetTumblePivotCmd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tumbleMode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_library\SSelection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_library\SPlane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pluginMain.cpp">
@@ -36,6 +48,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tumblePivotManipContainer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetTumblePivotCmd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\_library\SPlane.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
